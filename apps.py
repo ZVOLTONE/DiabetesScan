@@ -4,16 +4,12 @@ import joblib
 import os
 import gdown
 
-# ==========================
-# PAGE CONFIG & CUSTOM CSS (Harus paling atas sebelum manipulasi UI)
-# ==========================
 st.set_page_config(
     page_title="Diabetes Risk Predictor",
     page_icon="🩺",
     layout="centered"
 )
 
-# Custom CSS for UI styling and Result Card
 st.markdown("""
     <style>
     .main-title {
@@ -40,35 +36,27 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# ==========================
-# LOAD MODEL & DATA (Auto-download via gdown)
-# ==========================
+
 @st.cache_resource
 def load_large_model():
     model_path = "diabetes_stacking_model.pkl"
     file_id = "1GRVG3iVJP5IcWbdzNdgvcaxnG31wH94I"
     url = f"https://drive.google.com/uc?id={file_id}"
     
-    # Cek apakah file model sudah ada di server Streamlit
     if not os.path.exists(model_path):
         with st.spinner('Sedang mengunduh file model AI (500MB+) dari cloud server, mohon tunggu...'):
             gdown.download(url, model_path, quiet=False)
             
-    # Load menggunakan joblib setelah dipastikan file terunduh
     return joblib.load(model_path)
 
-# Panggil fungsi fungsi untuk memuat komponen
 model = load_large_model()
 scaler = joblib.load("robust_scaler.pkl")
 feature_list = joblib.load("features_list.pkl")
 
-# ==========================
-# HEADER & SIDEBAR
-# ==========================
+
 st.markdown('<div class="main-title">🩺 Diabetes Risk Predictor</div>', unsafe_allow_html=True)
 st.markdown('<div class="sub-title">Instantly evaluate your diabetes risk using trusted artificial intelligence.</div>', unsafe_allow_html=True)
 
-# Additional information in the Sidebar
 with st.sidebar:
     st.image("https://cdn-icons-png.flaticon.com/512/2868/2868406.png", width=100)
     st.header("About the App")
@@ -79,9 +67,7 @@ with st.sidebar:
     st.caption("⚠️ **Important Note:**")
     st.caption("This app is only an initial screening tool. Consult a physician or medical professional for an accurate clinical diagnosis.")
 
-# ==========================
-# USER INPUT (ORGANIZED IN TABS)
-# ==========================
+
 st.subheader("📋 Personal & Health Data")
 tab1, tab2, tab3 = st.tabs(["📊 Anthropometrics & Clinical", "🏃‍♂️ Lifestyle", "👤 Demographics"])
 
@@ -115,100 +101,88 @@ with tab3:
         income = st.selectbox("Income Level", ["Low", "Lower-Middle", "Middle", "Upper-Middle", "High"])
         employment = st.selectbox("Employment Status", ["Employed", "Retired", "Student", "Unemployed"])
 
-st.divider()
+    st.divider()
 
-# ==========================
-# PREDICT BUTTON & PROCESSING
-# ==========================
-_, center_col, _ = st.columns([1, 2, 1])
 
-with center_col:
-    predict_btn = st.button("🔍 Calculate Diabetes Risk", use_container_width=True, type="primary")
+    _, center_col, _ = st.columns([1, 2, 1])
 
-if predict_btn:
-    with st.spinner('Analyzing your metrics with AI...'):
-        # Ordinal Mapping
-        education_order = {'No formal': 1, 'Highschool': 2, 'Graduate': 3, 'Postgraduate': 4}
-        income_order = {'Low': 1, 'Lower-Middle': 2, 'Middle': 3, 'Upper-Middle': 4, 'High': 5}
-        smoking_order = {'Never': 1, 'Former': 2, 'Current': 3}
+    with center_col:
+        predict_btn = st.button("🔍 Calculate Diabetes Risk", use_container_width=True, type="primary")
 
-        user_data = {
-            "age": age,
-            "alcohol_consumption_per_week": alcohol_consumption_per_week,
-            "physical_activity_minutes_per_week": physical_activity_minutes_per_week,
-            "diet_score": diet_score,
-            "sleep_hours_per_day": sleep_hours_per_day,
-            "screen_time_hours_per_day": screen_time_hours_per_day,
-            "family_history_diabetes": 1 if family_history_diabetes == "Yes" else 0,
-            "bmi": bmi,
-            "waist_to_hip_ratio": waist_to_hip_ratio,
+    if predict_btn:
+        with st.spinner('Analyzing your metrics with AI...'):
+            education_order = {'No formal': 1, 'Highschool': 2, 'Graduate': 3, 'Postgraduate': 4}
+            income_order = {'Low': 1, 'Lower-Middle': 2, 'Middle': 3, 'Upper-Middle': 4, 'High': 5}
+            smoking_order = {'Never': 1, 'Former': 2, 'Current': 3}
 
-            "gender_Female": 1 if gender == "Female" else 0,
-            "gender_Male": 1 if gender == "Male" else 0,
-            "gender_Other": 1 if gender == "Other" else 0,
+            user_data = {
+                "age": age,
+                "alcohol_consumption_per_week": alcohol_consumption_per_week,
+                "physical_activity_minutes_per_week": physical_activity_minutes_per_week,
+                "diet_score": diet_score,
+                "sleep_hours_per_day": sleep_hours_per_day,
+                "screen_time_hours_per_day": screen_time_hours_per_day,
+                "family_history_diabetes": 1 if family_history_diabetes == "Yes" else 0,
+                "bmi": bmi,
+                "waist_to_hip_ratio": waist_to_hip_ratio,
 
-            "ethnicity_Asian": 1 if ethnicity == "Asian" else 0,
-            "ethnicity_Black": 1 if ethnicity == "Black" else 0,
-            "ethnicity_Hispanic": 1 if ethnicity == "Hispanic" else 0,
-            "ethnicity_Other": 1 if ethnicity == "Other" else 0,
-            "ethnicity_White": 1 if ethnicity == "White" else 0,
+                "gender_Female": 1 if gender == "Female" else 0,
+                "gender_Male": 1 if gender == "Male" else 0,
+                "gender_Other": 1 if gender == "Other" else 0,
 
-            "education_level_encoded": education_order[education],
-            "income_level_encoded": income_order[income],
+                "ethnicity_Asian": 1 if ethnicity == "Asian" else 0,
+                "ethnicity_Black": 1 if ethnicity == "Black" else 0,
+                "ethnicity_Hispanic": 1 if ethnicity == "Hispanic" else 0,
+                "ethnicity_Other": 1 if ethnicity == "Other" else 0,
+                "ethnicity_White": 1 if ethnicity == "White" else 0,
 
-            "employment_Employed": 1 if employment == "Employed" else 0,
-            "employment_Retired": 1 if employment == "Retired" else 0,
-            "employment_Student": 1 if employment == "Student" else 0,
-            "employment_Unemployed": 1 if employment == "Unemployed" else 0,
+                "education_level_encoded": education_order[education],
+                "income_level_encoded": income_order[income],
 
-            "smoking_status_encoded": smoking_order[smoking]
-        }
+                "employment_Employed": 1 if employment == "Employed" else 0,
+                "employment_Retired": 1 if employment == "Retired" else 0,
+                "employment_Student": 1 if employment == "Student" else 0,
+                "employment_Unemployed": 1 if employment == "Unemployed" else 0,
 
-        # Dataframe creation
-        input_df = pd.DataFrame([user_data])
-        input_df = input_df.reindex(columns=feature_list, fill_value=0)
+                "smoking_status_encoded": smoking_order[smoking]
+            }
 
-        # Transformation & Inference
-        input_scaled = scaler.transform(input_df)
-        prediction = model.predict(input_scaled)[0]
-        
-        # Scaling handling if output is an unbound probability scale
-        risk_score = float(prediction * 100) if prediction <= 1.0 else float(prediction)
-        risk_score = min(max(risk_score, 0.0), 100.0)
+            input_df = pd.DataFrame([user_data])
+            input_df = input_df.reindex(columns=feature_list, fill_value=0)
 
-        # Category mapping & Color logic
-        if risk_score < 30:
-            category = "🟢 LOW RISK"
-            bg_color = "#D1FAE5"
-            text_color = "#065F46"
-            advice = "Great job! Maintain your healthy lifestyle by balancing your diet and keeping up with physical activities."
-        elif risk_score < 60:
-            category = "🟡 MODERATE RISK"
-            bg_color = "#FEF3C7"
-            text_color = "#92400E"
-            advice = "Relatively stable, but stay mindful. Try to increase your physical activity duration and minimize sugary/processed food intake."
-        else:
-            category = "🔴 HIGH RISK"
-            bg_color = "#FEE2E2"
-            text_color = "#991B1B"
-            advice = "Attention required. It is highly recommended to schedule a routine blood sugar test (Fasting Blood Glucose/HbA1c) at a healthcare facility."
+            input_scaled = scaler.transform(input_df)
+            prediction = model.predict(input_scaled)[0]
+            
+            risk_score = float(prediction * 100) if prediction <= 1.0 else float(prediction)
+            risk_score = min(max(risk_score, 0.0), 100.0)
 
-        # ==========================
-        # DISPLAY RESULTS
-        # ==========================
-        st.subheader("📊 Risk Assessment Result")
-        
-        # Visual progress representation
-        st.progress(risk_score / 100)
-        
-        # Elegant HTML Custom Card Output
-        st.markdown(f"""
-            <div class="result-card" style="background-color: {bg_color}; border: 1px solid {text_color};">
-                <h3 style="color: {text_color}; margin: 0; font-size: 20px;">{category}</h3>
-                <h1 style="color: {text_color}; margin: 10px 0 5px 0; font-size: 48px;">{risk_score:.1f}%</h1>
-                <p style="color: {text_color}; font-size: 14px; font-weight: 500; margin: 0;">Estimated Risk Probability Score</p>
-            </div>
-        """, unsafe_allow_html=True)
-        
-        # Recommendation alert box
-        st.info(f"💡 **Recommendation:** {advice}")
+            if risk_score < 30:
+                category = "🟢 LOW RISK"
+                bg_color = "#D1FAE5"
+                text_color = "#065F46"
+                advice = "Great job! Maintain your healthy lifestyle by balancing your diet and keeping up with physical activities."
+            elif risk_score < 60:
+                category = "🟡 MODERATE RISK"
+                bg_color = "#FEF3C7"
+                text_color = "#92400E"
+                advice = "Relatively stable, but stay mindful. Try to increase your physical activity duration and minimize sugary/processed food intake."
+            else:
+                category = "🔴 HIGH RISK"
+                bg_color = "#FEE2E2"
+                text_color = "#991B1B"
+                advice = "Attention required. It is highly recommended to schedule a routine blood sugar test (Fasting Blood Glucose/HbA1c) at a healthcare facility."
+
+
+            st.subheader("📊 Risk Assessment Result")
+            
+            st.progress(risk_score / 100)
+            
+            st.markdown(f"""
+                <div class="result-card" style="background-color: {bg_color}; border: 1px solid {text_color};">
+                    <h3 style="color: {text_color}; margin: 0; font-size: 20px;">{category}</h3>
+                    <h1 style="color: {text_color}; margin: 10px 0 5px 0; font-size: 48px;">{risk_score:.1f}%</h1>
+                    <p style="color: {text_color}; font-size: 14px; font-weight: 500; margin: 0;">Estimated Risk Probability Score</p>
+                </div>
+            """, unsafe_allow_html=True)
+            
+            st.info(f"💡 **Recommendation:** {advice}")
